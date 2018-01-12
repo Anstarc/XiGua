@@ -5,6 +5,11 @@
 #include <sstream>
 #include <set>
 #include <thread>
+#include "api/baseapi.h"
+#include "allheaders.h"
+#include "strngs.h"
+#include "Searcher.h"
+//#include "execmd.h"
 
 using namespace std;
 
@@ -12,21 +17,6 @@ using namespace std;
 //1 store phone pixel
 int x[2],y[2],line[2];
 set<int> fail;
-
-int execmd(string cmd,string& result) {
-	char buffer[128];                         //定义缓冲区                          
-	FILE* pipe = _popen(cmd.c_str(),"r");            //打开管道，并执行命令   
-	if (!pipe)
-		return 0;                      //返回0表示运行失败   
-
-	while (!feof(pipe)) {
-		if (fgets(buffer,128,pipe)){             //将管道输出到result中   
-			result += buffer;
-		}
-	}
-	_pclose(pipe);                            //关闭管道   
-	return 1;                                 //返回1表示运行成功   
-}
 
 void devices(vector<string>& sid, int type)
 {
@@ -74,9 +64,8 @@ void touch(int num, string sid)
 	else
 		cmd = "nox_adb -s "+sid+" shell input swipe "+to_string(x[1])+" "+to_string(y[1]+(num-1)*line[1])+" "+to_string(x[1])+" "+to_string(y[1]+(num-1)*line[1]);
 
-	string tmp;
 	//system(cmd.c_str());
-	execmd(cmd,tmp);
+	execmd(cmd);
 }
 
 vector<int> touch_logi(int num, vector<string>& sid)
@@ -122,12 +111,12 @@ vector<int> touch_logi(int num, vector<string>& sid)
 void switch_devices(vector<string>& sid)
 {
 	string start = " shell am start -n com.ss.android.article.video/.activity.SplashActivity";
-	string tmp;
 	for (int i = 0; i<sid.size(); i++)
 	{
 		cout<<"device "<<i+1<<" start"<<endl;
+
 		string cmd = "nox_adb -s "+sid[i]+start;
-		execmd(cmd,tmp);
+		//execmd(cmd);
 		getchar();
 	}
 }
@@ -179,6 +168,8 @@ int main(){
 	devices(sid, 0);
 	//devices(sid, 1);
 	string opt;
+	Searcher* seacher;
+	
 
 	ifstream fin("sim.config");
 	fin>>x[0]>>y[0]>>line[0];
@@ -220,6 +211,13 @@ int main(){
 			for (set<int>::iterator i= fail.begin(); i!=fail.end(); i++)
 				cout<<*i<<" ";
 			cout<<endl;
+		}
+		if (opt[0]=='s')
+		{
+			if (opt.size()>1)
+				seacher = new Searcher(sid[opt[1]-'1']);
+			else
+				seacher->Search();
 		}
 
 	}
